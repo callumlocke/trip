@@ -2,7 +2,6 @@
   "camelcase": true,
   "curly": false,
   "eqeqeq": true,
-  "freeze": true,
   "indent": 2,
   "newcap": false,
   "quotmark": "single",
