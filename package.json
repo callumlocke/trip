@@ -1,7 +1,7 @@
 {
   "name": "trip",
   "version": "0.3.2",
-  "description": "A very small task runner",
+  "description": "Run JavaScript functions from the command line",
   "author": "Callum Locke",
   "license": "MIT",
   "bin": {
