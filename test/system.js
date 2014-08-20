@@ -10,7 +10,7 @@ var exec = require('child_process').exec;
 
 describe('trip.js', function () {
 
-  var cliPath = path.resolve(__dirname, '..', 'bin', 'cli.js');
+  var cliPath = path.resolve(__dirname, '..', 'cli.js');
 
   before(function (done) {
     fs.chmodSync(cliPath, '777');
