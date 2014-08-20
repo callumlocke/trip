@@ -5,7 +5,7 @@
   "author": "Callum Locke",
   "license": "MIT",
   "bin": {
-    "trip": "bin/cli.js"
+    "trip": "cli.js"
   },
   "scripts": {
     "test": "jshint **/*.js && mocha"
