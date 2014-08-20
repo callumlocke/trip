@@ -80,7 +80,7 @@ exports.inline = function (done) {
 $ trip scripts styles images inline
 ```
 
-This will run the four named tasks in series (one after the other).
+This will run the four named tasks in series (see how to do parallel tasks [below](#parallel-tasks)).
 
 
 ### tasks are asynchronous
@@ -93,7 +93,7 @@ If you prefer, you can write a synchronous task by explicitly returning `true` f
 
 ### subtasks
 
-Use an **array** to make subtasks:
+A task can be defined as an **array** of subtasks:
 
 ```js
 exports.build = ['scripts', 'styles', 'images', 'inline'];
