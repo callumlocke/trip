@@ -1,14 +1,23 @@
 'use strict';
 
-var trip = require('../..');
+exports['say-thing-2'] = function (done) {
+  setTimeout(function () {
+    console.log('thing 2');
+    done();
+  }, 150);
+};
 
-trip.task('parallel-actions',
-  function (done) {
-    setTimeout(function () {
-      console.log('thing 1');
-      done();
-    }, 100);
-  },
+exports['say-thing-1'] = function (done) {
+  setTimeout(function () {
+    console.log('thing 1');
+    done();
+  }, 100);
+};
+
+
+// expected order: 1,2,3,4
+exports['parallel-subtasks'] = [
+  'say-thing-1',
 
   [
     function (done) {
@@ -17,43 +26,29 @@ trip.task('parallel-actions',
         done();
       }, 200);
     },
-    function (done) {
-      setTimeout(function () {
-        console.log('thing 2');
-        done();
-      }, 100);
-    },
+
+    'say-thing-2' // takes 150ms
   ],
 
   function (done) {
     setTimeout(function () {
       console.log('thing 4');
       done();
-    }, 100);
+    }, 50);
   }
-);
+];
 
 
-trip.task('task-input',
-  function (done) {
-    console.log('action 1', this.input);
-    done(null, 'info from action 1');
+exports['task-targets'] = [
+  function (msg1, msg2, done) {
+    setTimeout(function () {
+      console.log('action 1', msg1, msg2);
+      done(null, 'message from action 1');
+    }, 100)
   },
 
-  function (done) {
-    console.log('action 2', this.input);
+  function (msg, done) {
+    console.log('action 2', msg);
     done();
   }
-);
-
-
-trip.task('sync-actions',
-  function () {
-    console.log('action 1', this.input);
-    return 'info from action 1';
-  },
-
-  function () {
-    console.log('action 2', this.input);
-  }
-);
+];

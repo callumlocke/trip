@@ -1,137 +1,194 @@
 # trip
 
-A very small task runner.
+> Run JavaScript functions from the command line.
 
 [![NPM version][npm-image]][npm-url] [![Build Status][travis-image]][travis-url] [![Dependency Status][depstat-image]][depstat-url]
 
-trip is like a stripped-down version of [gulp](https://github.com/gulpjs/gulp). All build functionality is removed, leaving just a little API for registering functions that you can run from the command line. The idea is to piece together your own build system using regular Node.js modules.
+**trip** is a minimalist task runner. Sort of like [gulp](http://gulpjs.com/) or [grunt](http://gruntjs.com/) without any build functionality. Or a glorified `$ npm run`.
 
-Another difference from gulp is that everything runs in **series by default** – but you can opt to run things in parallel by wrapping them in an array.
+It doesn't include utilities for reading/writing files or massaging data. The idea is to write your own build system using regular Node modules—trip is just a way to organise your tasks and run them from your terminal, in series or parallel.
 
 
-## Getting started
 
-Install trip globally to get the CLI: `$ npm install -g trip`
-
-Then, whenever you want to use trip in a project:
-
-1. Install a local copy of trip in the project folder.
+## install
 
 ```sh
+$ npm install --global trip
+```
+
+
+
+## usage
+
+### basic steps
+
+#### 1. install a local copy of trip in your project
+
+```sh
+$ cd some/project
 $ npm install --save-dev trip
 ```
 
-2. Create a `tripfile.js` and write some tasks.
+#### 2. create a `tripfile.js` and export some functions
 
 ```js
-trip.task('mytask', function () {
-  console.log('simples');
-});
+var coffee = require('coffee-script'),
+    sass = require('node-sass'),
+    fs = require('fs'),
+    Imagemin = require('imagemin'),
+    glob = require('glob');
+
+exports.scripts = function (done) {
+  var js = coffee.compile(fs.readFileSync('app/scripts/main.coffee'));
+  fs.writeFile('dist/scripts/main.js', js, done);
+};
+
+exports.styles = function (done) {
+  sass.renderFile({
+    file: 'app/scripts/main.scss',
+    outFile: 'dist/scripts/main.css',
+    success: function (file) {
+      console.log('rendered', file);
+      done();
+    },
+    error: done
+  });
+};
+
+exports.images = function (done) {
+  glob('app/**/*.{png,jpg}', function (err, files) {
+    if (err) return done(err);
+
+    async.each(files, function (file, done) {
+      var im = new Imagemin()
+        .src(file)
+        .dest(file.replace('app', 'dist'))
+        .optimize(done);
+    }, done);
+  })
+};
+
+exports.inline = function (done) {
+  var embedder = new ResourceEmbedder(fs.readFileSync('app/index.html'));
+  embedder.get(function (markup) {
+    fs.writeFileSync('dist/index.html', markup);
+  });
+};
 ```
 
-(You can also use `tripfile.coffee` and other dialects supported by [interpret](https://github.com/tkellen/node-interpret).)
-
-Then you run your tasks like this:
+#### 3. run tasks from the command line
 
 ```sh
-$ trip mytask
+$ trip scripts styles images inline
 ```
 
+This will run the four named tasks in series (one after the other).
 
-## Registering tasks
 
-`trip.task(name, action1[, action2...])`
+### tasks are asynchronous
 
-The first argument is the name, followed by one or more **actions**.
+You are expected to take a `done` argument, and call it when you're done. This allows trip to move on to the next task in the series, if any. To indicate that your task failed, call `done(error)`—this will halt trip.
 
-An action can be:
+<!-- NOT IMPLEMENTED
+If you prefer, you can write a synchronous task by explicitly returning `true` from the function. (For errors, just `throw`.) Any other return value is ignored. -->
 
-- a function,
-- the name of another task, or
-- an array of actions to be run **in parallel**.
 
-Example:
+### subtasks
+
+Use an **array** to make subtasks:
 
 ```js
-var trip = require('trip');
-
-// a simple task that prints 'foo'
-trip.task('foo', function () {
-  console.log('foo');
-});
-
-// an async task that waits 500ms then prints 'bar'
-trip.task('bar', function (done) {
-  setTimeout(function () {
-    console.log('this is bar!');
-    done();
-  }, 500);
-});
-
-// a task that runs the above two tasks in parallel
-trip.task('together', ['bar', 'foo']);
-
-// a longer example...
-trip.task('complex', ['bar', 'foo'], 'sheep', someFunc, ['cats', 'dogs', someOtherFunc]); // see below
+exports.build = ['scripts', 'styles', 'images', 'inline'];
 ```
 
-The `'complex'` task in the above example does these things in order:
+Now you can do `$ trip build` to run all four tasks (in series).
 
-1. runs the tasks `bar` and `foo` in parallel
-2. runs a task called `sheep`
-3. runs the function `someFunc`
-4. runs the tasks `cats`, `dogs` and also the function `someOtherFunc` in parallel
-
-
-## Errors
-
-If you pass any non-null value to `done` as its first argument, this is interpreted as an error, and the action is deemed to have failed. Subsequent actions will not be run and the process will exit with code 1.
-
-For synchronous actions (functions that don't take a `done` argument), just `throw` any error.
-
-
-## Task input
-
-> This is an experimental feature.
-
-Tasks can optionally receive input (e.g. a filename), either from the command line or from the previous task in a sequence. Instead of coming through as a function argument, it is available as `this.input` (because arguments are already used for other purposes).
-
-Example use case: a `styles` task that renders Sass to CSS. It could render `src/*.scss` by default, but if you call it with a file name, it could just render that specific file.
-
-### From the command line
-
-```sh
-$ trip foo:someinput
-```
-
-Then, in the `foo` task's first action, `this.input` will be the string `"someinput"`. (NB. the input is always a string when set from the command line.)
-
-### From task to task
+You can also use **functions** (or function references) directly in the array, or a mixture of functions and strings:
 
 ```js
-trip.task('foo',
+exports.things = [
+  'thing1',
+
   function (done) {
-    console.log('action 1');
-    done(null, {bread: 'cool'});
+    console.log('thing 2');
+    done();
   },
 
-  function (done) {
-    console.log('action 2');
-    console.log(this.input.bread);
-    done();
-  }
-);
+  'thing3'
+];
 ```
 
-In this example, running `$ trip foo` will print:
+### parallel tasks
 
-```
-action 1
-action 2
-cool
+#### from the CLI
+
+Join tasks with **commas** to run them in parallel:
+
+```sh
+$ trip styles,scripts,images inline
 ```
 
-For synchronous actions (functions that don't take a `done` argument), if you want to pass a value to the next task, just `return` it.
+This runs the `styles`, `scripts` and `images` tasks in parallel, then—when they've all finished—it runs the `inline` task.
+
+#### parallel subtasks
+
+Use a **nested array** to run tasks in parallel:
+
+```js
+exports.build = [['styles', 'scripts', 'images'], 'inline'];
+```
+
+Now `$ trip build` should be a lot faster. (As above, it will wait for the first three parallel tasks to finish before running `inline`.)
+
+Each level of nesting reverses the series:parallel decision, so you can do really weird, over-engineered stuff if you want.
+
+
+### task targets
+
+Targets are a way for tasks to accept arguments.
+
+Example use case: you write a `styles` task that, by default, compiles all your `*.scss` files. But you also accept an optional filename target, so you can opt to compile just a single file, depending on how you call the task.
+
+#### setting targets from the command line
+
+You can pass target strings straight from the command line, using **colons** as delimiters:
+
+```sh
+trip say:pigs:otters
+```
+
+```js
+exports.say = function (msg1, msg2, done) {
+  console.log('1:', msg1); // "1: pigs"
+  console.log('2:', msg2); // "2: otters"
+  done();
+};
+```
+
+
+#### setting targets from one task to the next
+
+(This might be useful in some weird situations.)
+
+If you have a series of tasks (that are running either via comma-joined task names in the CLI, or as part of a subtask series), then it's possible for one task to specify target(s) for the next task—whatever that next task might be.
+
+```sh
+$ trip taskOne taskTwo
+```
+
+```js
+exports.taskOne = function (done) {
+  done(null, 'pigs', 'otters'); // 1st argument must be an error or null,
+                                // subsequent arguments are targets for the next task
+};
+
+exports.taskTwo = function (msg1, msg2, done) {
+  console.log('1:', msg1); // prints "1: pigs"
+  console.log('2:', msg2); // prints "2: otters"
+  done();
+};
+```
+
 
 
 ## License
