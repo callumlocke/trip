@@ -1,6 +1,6 @@
 {
   "name": "trip",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "Run JavaScript functions from the command line",
   "author": "Callum Locke",
   "license": "MIT",
