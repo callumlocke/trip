@@ -15,7 +15,7 @@ Install trip globally to get the CLI: `$ npm install -g trip`
 
 Then, whenever you want to use trip in a project:
 
-1. Install a local trip in the project folder.
+1. Install a local copy of trip in the project folder.
 
 ```sh
 $ npm install --save-dev trip
