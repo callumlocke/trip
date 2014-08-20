@@ -1,4 +1,4 @@
-# trip [![NPM version][npm-image]][npm-url] [![Build Status][travis-image]][travis-url] [![Dependency Status][depstat-image]][depstat-url]
+# trip.js [![NPM version][npm-image]][npm-url] [![Build Status][travis-image]][travis-url] [![Dependency Status][depstat-image]][depstat-url]
 
 > Run JavaScript functions from the command line.
 
@@ -74,6 +74,12 @@ exports.inline = function (done) {
 };
 ```
 
+Tasks follow the standard Node async pattern: you take a `done` callback, and call it when you're done. Pass an error as the first argument to indicate that your task failed.
+
+<!-- NOT IMPLEMENTED
+If you prefer, you can write a synchronous task by explicitly returning `true` from the function. (For errors, just `throw`.) Any other return value is ignored. -->
+
+
 #### 3. run tasks from the command line
 
 ```sh
@@ -81,14 +87,6 @@ $ trip scripts styles images inline
 ```
 
 This will run the four named tasks in series (see how to do parallel tasks [below](#parallel-tasks)).
-
-
-### tasks are asynchronous
-
-You are expected to take a `done` argument, and call it when you're done. This allows trip to move on to the next task in the series, if any. To indicate that your task failed, call `done(error)`—this will halt trip.
-
-<!-- NOT IMPLEMENTED
-If you prefer, you can write a synchronous task by explicitly returning `true` from the function. (For errors, just `throw`.) Any other return value is ignored. -->
 
 
 ### subtasks
