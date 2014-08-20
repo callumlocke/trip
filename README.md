@@ -1,12 +1,12 @@
 # trip
 
-Run JavaScript functions from the command line.
+> Run JavaScript functions from the command line.
 
 [![NPM version][npm-image]][npm-url] [![Build Status][travis-image]][travis-url] [![Dependency Status][depstat-image]][depstat-url]
 
-trip is a minimalist task runner. Sort of like [gulp](http://gulpjs.com/) or [grunt](http://gruntjs.com/) without any build functionality. Or a glorified `$ npm run`.
+**trip** is a minimalist task runner. Sort of like [gulp](http://gulpjs.com/) or [grunt](http://gruntjs.com/) without any build functionality. Or a glorified `$ npm run`.
 
-It doesn't include utilities for reading/writing files. The idea is to write your own build system using regular Node modules – trip is just a way to organise your tasks and run them from your terminal – in series or parallel (or combinations of the two).
+It doesn't include utilities for reading/writing files or massaging data. The idea is to write your own build system using regular Node modules—trip is just a way to organise your tasks and run them from your terminal, in series or parallel.
 
 
 
@@ -87,7 +87,7 @@ This will run the four named tasks in series (one after the other).
 
 ### tasks are asynchronous
 
-You are expected to take a `done` argument, and call it when you're done. This allows trip to move on to the next task in the series, if any. To indicate that your task failed, call `done(error)` – this will halt trip.
+You are expected to take a `done` argument, and call it when you're done. This allows trip to move on to the next task in the series, if any. To indicate that your task failed, call `done(error)`—this will halt trip.
 
 <!-- NOT IMPLEMENTED
 If you prefer, you can write a synchronous task by explicitly returning `true` from the function. (For errors, just `throw`.) Any other return value is ignored. -->
@@ -128,7 +128,7 @@ Join tasks with **commas** to run them in parallel:
 $ trip styles,scripts,images inline
 ```
 
-This runs the `styles`, `scripts` and `images` tasks in parallel, then – when they've all finished – it runs the `inline` task.
+This runs the `styles`, `scripts` and `images` tasks in parallel, then—when they've all finished—it runs the `inline` task.
 
 #### parallel subtasks
 
@@ -170,7 +170,7 @@ exports.say = function (msg1, msg2, done) {
 
 (This might be useful in some weird situations.)
 
-If you have a series of tasks (that are running either via comma-joined task names in the CLI, or as part of a subtask series), then it's possible for one task to specify target(s) for the next task – whatever that next task might be.
+If you have a series of tasks (that are running either via comma-joined task names in the CLI, or as part of a subtask series), then it's possible for one task to specify target(s) for the next task—whatever that next task might be.
 
 ```sh
 $ trip taskOne taskTwo
