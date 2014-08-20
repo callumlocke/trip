@@ -123,6 +123,26 @@ cli.launch({
               }
 
               if (type === 'function') {
+                // prevent overloading with extra targets as it breaks the
+                // automatic callback-at-end functionality
+                var numTargets = targets.length,
+                    numTargetsExpected = action.length - 1;
+
+                if (numTargets > numTargetsExpected) {
+                  done(new Error(
+                    'Function expects ' + numTargetsExpected + ' targets, ' +
+                    'but ' + numTargets + ' targets were specified. ' +
+                    'You cannot overload task functions with extra targets.'
+                  ));
+                  return;
+                }
+
+                // pad targets with nulls so that callback is guaranteed to be
+                // the last argument the user's function accepts
+                while (targets.length < numTargetsExpected)
+                  targets.push(null);
+
+                // ensure callback is passed to the last one
                 action.apply(trip, targets.concat([actionDone]));
                 return;
               }
@@ -216,7 +236,7 @@ cli.launch({
     trip.log(chalk.gray('total: ' + prettyHRTime(process.hrtime(start))));
 
     if (err) {
-      trip.log(chalk.red('there were errors'));
+      trip.log(chalk.red('trip encountered errors :('));
       process.exit(1);
     }
   });

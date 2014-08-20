@@ -103,8 +103,20 @@ exports.build = ['scripts', 'styles', 'images', 'inline'];
 
 Now you can do `$ trip build` to run all four tasks (in series).
 
-(Note: you can also put direct function references in the array, not just strings.)
+You can also use **functions** (or function references) directly in the array, or a mixture of functions and strings:
 
+```js
+exports.things = [
+  'thing1',
+
+  function (done) {
+    console.log('thing 2');
+    done();
+  },
+
+  'thing3'
+];
+```
 
 ### parallel tasks
 
@@ -133,9 +145,9 @@ Each level of nesting reverses the series:parallel decision, so you can do reall
 
 ### task targets
 
-'Targets' are a way for tasks to accept arguments.
+Targets are a way for tasks to accept arguments.
 
-Example use case: you write a `styles` task that, by default, compiles all your `*.scss` files... But you also accept an optional filename target, so you can opt to compile just a single file, depending on how you call the task.
+Example use case: you write a `styles` task that, by default, compiles all your `*.scss` files. But you also accept an optional filename target, so you can opt to compile just a single file, depending on how you call the task.
 
 #### setting targets from the command line
 
@@ -146,14 +158,12 @@ trip say:pigs:otters
 ```
 
 ```js
-exports.say = function (done, msg1, msg2) {
+exports.say = function (msg1, msg2, done) {
   console.log('1:', msg1); // "1: pigs"
   console.log('2:', msg2); // "2: otters"
   done();
 };
 ```
-
-This breaks from the traditional Node approach of putting the callback after the other arguments.
 
 
 #### setting targets from one task to the next
@@ -168,17 +178,16 @@ $ trip taskOne taskTwo
 
 ```js
 exports.taskOne = function (done) {
-  done(null, 'pigs', 'otters'); // 1st argument must be an error or null; other arguments are targets for the next task
+  done(null, 'pigs', 'otters'); // 1st argument must be an error or null,
+                                // subsequent arguments are targets for the next task
 };
 
-exports.taskTwo = function (done, message1, message2) {
-  console.log('1:', msg1); // "1: pigs"
-  console.log('2:', msg2); // "2: otters"
+exports.taskTwo = function (msg1, msg2, done) {
+  console.log('1:', msg1); // prints "1: pigs"
+  console.log('2:', msg2); // prints "2: otters"
   done();
 };
 ```
-
-<!-- NB. there is no way for a synchronous task to pass a target to the next task in a series. Only async tasks can do this. -->
 
 
 

@@ -16,7 +16,7 @@ exports['say-thing-1'] = function (done) {
 
 
 // expected order: 1,2,3,4
-exports['parallel-actions'] = [
+exports['parallel-subtasks'] = [
   'say-thing-1',
 
   [
@@ -39,7 +39,7 @@ exports['parallel-actions'] = [
 ];
 
 
-exports['task-input'] = [
+exports['task-targets'] = [
   function (msg1, msg2, done) {
     setTimeout(function () {
       console.log('action 1', msg1, msg2);

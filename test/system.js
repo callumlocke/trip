@@ -32,8 +32,8 @@ describe('trip.js', function () {
   });
 
 
-  it('can run actions in series and parallel', function (done) {
-    exec(cliPath + ' parallel-actions', function (err, stdout, stderr) {
+  it('can run subtasks in series and parallel', function (done) {
+    exec(cliPath + ' parallel-subtasks', function (err, stdout, stderr) {
       console.log('\n\n=== STDOUT:\n', stdout, '\n=== /STDOUT');
       console.log('\n\n=== STDERR:', stderr, '\n=== /STDERR');
 
@@ -52,7 +52,7 @@ describe('trip.js', function () {
 
 
   it('actions can receive targets from cli and from previous actions', function (done) {
-    exec(cliPath + ' task-input:"from command line":"hi"', function (err, stdout, stderr) {
+    exec(cliPath + ' task-targets:"from command line":"hi"', function (err, stdout, stderr) {
       console.log('\n\n=== STDOUT:\n', stdout, '\n=== /STDOUT');
       console.log('\n\n=== STDERR:', stderr, '\n=== /STDERR');
 
@@ -68,7 +68,7 @@ describe('trip.js', function () {
   });
 
 
-  it ('can run parallel actions straight from the command line', function (done) {
+  it('can run parallel tasks straight from the command line', function (done) {
     exec(cliPath + ' say-thing-1,say-thing-2', function (err, stdout, stderr) {
       console.log('\n\n=== STDOUT:\n', stdout, '\n=== /STDOUT');
       console.log('\n\n=== STDERR:', stderr, '\n=== /STDERR');
@@ -80,6 +80,41 @@ describe('trip.js', function () {
       expect(lines[0]).to.equal('thing 1'); // can receive params from cli
       expect(lines[1]).to.equal('thing 2'); // can receive params from previous task
       expect(stderr).to.equal('');
+      done();
+    });
+  });
+
+
+  it('tasks expecting targets still work when not all targets are specified', function (done) {
+    exec(cliPath + ' task-targets:thing', function (err, stdout, stderr) {
+      console.log('\n\n=== STDOUT:\n', stdout, '\n=== /STDOUT');
+      console.log('\n\n=== STDERR:', stderr, '\n=== /STDERR');
+
+      var lines = stdout.split('\n').filter(function (line) {
+        return line.length && line.charAt(0) !== '[';
+      });
+
+      expect(lines[0]).to.equal('action 1 thing null');
+      expect(lines[1]).to.equal('action 2 message from action 1');
+      expect(stderr).to.equal('');
+      done();
+    });
+  });
+
+
+  it('errors when you overload a task', function (done) {
+    exec(cliPath + ' task-targets:one:two:three:four', function (err, stdout, stderr) {
+      console.log('\n\n=== STDOUT:\n', stdout, '\n=== /STDOUT');
+      console.log('\n\n=== STDERR:', stderr, '\n=== /STDERR');
+
+      expect(err).to.be.an.instanceOf(Error);
+
+      var lines = stdout.split('\n').filter(function (line) {
+        return line.indexOf('Function expects 2 targets, but 4 targets were specified') !== -1;
+      });
+
+      expect(lines.length).to.equal(1);
+
       done();
     });
   });
