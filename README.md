@@ -29,17 +29,26 @@ $ npm install --save-dev trip
 
 #### 2. create a `tripfile.js` and export some functions
 
+Tasks follow the standard Node pattern: take a `done` callback, and call it when you're done. And pass an error as the first argument if your task failed.
+
 ```js
+// tripfile.js
 var coffee = require('coffee-script'),
     sass = require('node-sass'),
     fs = require('fs'),
     Imagemin = require('imagemin'),
     glob = require('glob');
 
+
 exports.scripts = function (done) {
-  var js = coffee.compile(fs.readFileSync('app/scripts/main.coffee'));
-  fs.writeFile('dist/scripts/main.js', js, done);
+  fs.readFile('app/scripts/main.coffee', function (err, js) {
+    if (err) return done(err);
+    
+    var js = coffee.compile();
+    fs.writeFile('dist/scripts/main.js', js, done);
+  });
 };
+
 
 exports.styles = function (done) {
   sass.renderFile({
@@ -52,6 +61,7 @@ exports.styles = function (done) {
     error: done
   });
 };
+
 
 exports.images = function (done) {
   glob('app/**/*.{png,jpg}', function (err, files) {
@@ -66,18 +76,14 @@ exports.images = function (done) {
   })
 };
 
+
 exports.inline = function (done) {
-  var embedder = new ResourceEmbedder(fs.readFileSync('app/index.html'));
+  var embedder = new ResourceEmbedder('app/index.html');
   embedder.get(function (markup) {
-    fs.writeFileSync('dist/index.html', markup);
+    fs.writeFile('dist/index.html', markup, done);
   });
 };
 ```
-
-Tasks follow the standard Node async pattern: you take a `done` callback, and call it when you're done. Pass an error as the first argument to indicate that your task failed.
-
-<!-- NOT IMPLEMENTED
-If you prefer, you can write a synchronous task by explicitly returning `true` from the function. (For errors, just `throw`.) Any other return value is ignored. -->
 
 
 #### 3. run tasks from the command line
@@ -86,7 +92,7 @@ If you prefer, you can write a synchronous task by explicitly returning `true` f
 $ trip scripts styles images inline
 ```
 
-This will run the four named tasks in series (see how to do parallel tasks [below](#parallel-tasks)).
+This will run the four named tasks, in series. (See parallel tasks [below](#parallel-tasks).)
 
 
 ### subtasks
@@ -97,9 +103,9 @@ A task can be defined as an **array** of subtasks:
 exports.build = ['scripts', 'styles', 'images', 'inline'];
 ```
 
-Now you can do `$ trip build` to run all four tasks (in series).
+Now you can do `$ trip build` to run all four tasks, in series.
 
-You can also use **functions** (or function references) directly in the array, or a mixture of functions and strings:
+You can also use **functions** (or function references) directly in an array, or a mixture of functions and task names:
 
 ```js
 exports.things = [
@@ -124,63 +130,60 @@ Join tasks with **commas** to run them in parallel:
 $ trip styles,scripts,images inline
 ```
 
-This runs the `styles`, `scripts` and `images` tasks in parallel, then—when they've all finished—it runs the `inline` task.
+This runs the `styles`, `scripts` and `images` tasks in parallel then, when they've all finished, it runs the `inline` task.
 
-#### parallel subtasks
+#### in your tripfile
 
-Use a **nested array** to run tasks in parallel:
+Use a **nested array** to run subtasks in parallel:
 
 ```js
 exports.build = [['styles', 'scripts', 'images'], 'inline'];
 ```
 
-Now `$ trip build` should be a lot faster. (As above, it will wait for the first three parallel tasks to finish before running `inline`.)
+Now `$ trip build` does the same thing as the CLI example above, starting `inline` as soon as the three parallel tasks have all completed.
 
-Each level of nesting reverses the series:parallel decision, so you can do really weird, over-engineered stuff if you want.
+Each level of nesting reverses the series:parallel decision, so you can do complex, over-engineered stuff if you want. Probably only useful in obscure cases.
 
 
 ### task targets
 
-Targets are a way for tasks to accept arguments.
+Targets are arguments for tasks.
 
-Example use case: you write a `styles` task that, by default, compiles all your `*.scss` files. But you also accept an optional filename target, so you can opt to compile just a single file, depending on how you call the task.
+#### setting targets from the CLI
 
-#### setting targets from the command line
-
-You can pass target strings straight from the command line, using **colons** as delimiters:
+You can set string targets using **colons** as delimiters:
 
 ```sh
-trip say:pigs:otters
+$ trip say:otters:ducks
 ```
 
 ```js
-exports.say = function (msg1, msg2, done) {
-  console.log('1:', msg1); // "1: pigs"
-  console.log('2:', msg2); // "2: otters"
+exports.say = function (msg1, msg2, msg3, done) {
+  console.log(msg1); // otters
+  console.log(msg2); // ducks
+  console.log(msg3); // null
   done();
 };
 ```
 
+Note only two targets were specified, so `msg3` is `null`. This doesn't cause a problem; the `done` callback is always passed as the final argument.
 
 #### setting targets from one task to the next
 
-(This might be useful in some weird situations.)
-
-If you have a series of tasks (that are running either via comma-joined task names in the CLI, or as part of a subtask series), then it's possible for one task to specify target(s) for the next task—whatever that next task might be.
+If you have a series of tasks (either from the command line, or subtasks of another task), it's possible to set targets in one task for the next.
 
 ```sh
-$ trip taskOne taskTwo
+$ trip taskOne:otters taskTwo
 ```
 
 ```js
-exports.taskOne = function (done) {
-  done(null, 'pigs', 'otters'); // 1st argument must be an error or null,
-                                // subsequent arguments are targets for the next task
+exports.taskOne = function (done, msg) {
+  done(null, msg, 'ducks'); // 1st argument must be an error or null
 };
 
 exports.taskTwo = function (msg1, msg2, done) {
-  console.log('1:', msg1); // prints "1: pigs"
-  console.log('2:', msg2); // prints "2: otters"
+  console.log(msg1); // otters
+  console.log(msg2); // ducks
   done();
 };
 ```
