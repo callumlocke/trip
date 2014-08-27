@@ -12,7 +12,7 @@ It doesn't include utilities for reading/writing files or massaging data. The id
 $ npm install --global trip
 ```
 
-This adds trip to your `PATH`.
+This adds trip to your $PATH.
 
 
 ## usage
