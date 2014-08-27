@@ -1,10 +1,8 @@
 # trip.js [![NPM version][npm-image]][npm-url] [![Build Status][travis-image]][travis-url] [![Dependency Status][depstat-image]][depstat-url]
 
-> Run JavaScript functions from the command line.
+**trip** is a minimalist task runner. Sort of like [gulp](http://gulpjs.com/) or [grunt](http://gruntjs.com/) without any build functionality. Or a glorified `$ npm run` with optional parallelism.
 
-**trip** is a minimalist task runner. Sort of like [gulp](http://gulpjs.com/) or [grunt](http://gruntjs.com/) without any build functionality. Or a glorified `$ npm run`.
-
-It doesn't include utilities for reading/writing files or massaging data. The idea is to write your own build system using regular Node modules—trip is just a way to organise your tasks and run them from your terminal, in series or parallel.
+It doesn't include utilities for reading/writing files or massaging data. The idea is to write your own build system using regular Node modules.
 
 
 
@@ -14,11 +12,12 @@ It doesn't include utilities for reading/writing files or massaging data. The id
 $ npm install --global trip
 ```
 
+This adds trip to your `PATH`.
 
 
 ## usage
 
-### basic steps
+### getting started
 
 #### 1. install a local copy of trip in your project
 
@@ -27,12 +26,35 @@ $ cd some/project
 $ npm install --save-dev trip
 ```
 
-#### 2. create a `tripfile.js` and export some functions
+#### 2. create a `tripfile.js` at the root of your project
 
-Tasks follow the standard Node pattern: take a `done` callback, and call it when you're done. And pass an error as the first argument if your task failed.
+Simply export functions. These are your tasks. Follow the standard Node pattern: take a `done` callback, and call it when you're done. (Pass an error as the first argument to indicate your task failed.)
 
 ```js
-// tripfile.js
+exports.greet = function (done) {
+  console.log('hi');
+
+  setTimeout(function () {
+    console.log('bye');
+    done();
+  }, 2000);
+};
+```
+
+
+
+#### 3. run tasks from the command line
+
+![Screenshot](screenshots/greet.png)
+
+
+
+
+### example
+
+Here is a tripfile that exports four tasks:
+
+```js
 var coffee = require('coffee-script'),
     sass = require('node-sass'),
     fs = require('fs'),
@@ -43,7 +65,7 @@ var coffee = require('coffee-script'),
 exports.scripts = function (done) {
   fs.readFile('app/scripts/main.coffee', function (err, js) {
     if (err) return done(err);
-    
+
     var js = coffee.compile();
     fs.writeFile('dist/scripts/main.js', js, done);
   });
@@ -85,19 +107,14 @@ exports.inline = function (done) {
 };
 ```
 
+With this tripfile, you can run `$ trip images` to compile all your images, for example.
 
-#### 3. run tasks from the command line
-
-```sh
-$ trip scripts styles images inline
-```
-
-This will run the four named tasks, in series. (See parallel tasks [below](#parallel-tasks).)
+You can also do `$ trip scripts styles images inline` to perform all four named tasks, in series. To avoid typing all that every time, use **subtasks**.
 
 
 ### subtasks
 
-A task can be defined as an **array** of subtasks:
+A task can be defined as an **array** of other tasks:
 
 ```js
 exports.build = ['scripts', 'styles', 'images', 'inline'];
@@ -105,24 +122,24 @@ exports.build = ['scripts', 'styles', 'images', 'inline'];
 
 Now you can do `$ trip build` to run all four tasks, in series.
 
-You can also use **functions** (or function references) directly in an array, or a mixture of functions and task names:
+You can also use **inline functions** (or function references) directly in an array, or a mixture of functions and task names:
 
 ```js
 exports.things = [
-  'thing1',
+  'foo',
 
   function (done) {
-    console.log('thing 2');
+    console.log('this runs between foo and bar');
     done();
   },
 
-  'thing3'
+  'bar'
 ];
 ```
 
 ### parallel tasks
 
-#### from the CLI
+#### ...from the CLI
 
 Join tasks with **commas** to run them in parallel:
 
@@ -132,7 +149,7 @@ $ trip styles,scripts,images inline
 
 This runs the `styles`, `scripts` and `images` tasks in parallel then, when they've all finished, it runs the `inline` task.
 
-#### in your tripfile
+#### ...in your tripfile
 
 Use a **nested array** to run subtasks in parallel:
 
@@ -142,7 +159,7 @@ exports.build = [['styles', 'scripts', 'images'], 'inline'];
 
 Now `$ trip build` does the same thing as the CLI example above, starting `inline` as soon as the three parallel tasks have all completed.
 
-Each level of nesting reverses the series:parallel decision, so you can do complex, over-engineered stuff if you want. Probably only useful in obscure cases.
+> Each level of nesting reverses the series:parallel decision, so you can do complex, over-engineered stuff if you want. Probably only useful in obscure cases.
 
 
 ### task targets
@@ -151,7 +168,7 @@ Targets are arguments for tasks.
 
 #### setting targets from the CLI
 
-You can set string targets using **colons** as delimiters:
+You can set targets (only strings) using **colons** as delimiters:
 
 ```sh
 $ trip say:otters:ducks
@@ -190,11 +207,12 @@ exports.taskTwo = function (msg1, msg2, done) {
 
 
 
-## License
+## license
 
 [The MIT License](http://opensource.org/licenses/MIT)
 
 
+<!-- badge URLs -->
 [npm-url]: https://npmjs.org/package/trip
 [npm-image]: https://badge.fury.io/js/trip.png
 
