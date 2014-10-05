@@ -52,7 +52,7 @@ exports.greet = function (done) {
 
 ### example
 
-Here is a tripfile that exports four tasks:
+This tripfile exports four tasks:
 
 ```js
 var coffee = require('coffee-script'),
@@ -90,12 +90,12 @@ exports.images = function (done) {
     if (err) return done(err);
 
     async.each(files, function (file, done) {
-      var im = new Imagemin()
+      new Imagemin()
         .src(file)
         .dest(file.replace('app', 'dist'))
         .optimize(done);
     }, done);
-  })
+  });
 };
 
 
@@ -109,7 +109,7 @@ exports.inline = function (done) {
 
 With this tripfile, you can run `$ trip images` to compile all your images, for example.
 
-You can also do `$ trip scripts styles images inline` to perform all four named tasks, in series. To avoid typing all that every time, use **subtasks**.
+You can also do `$ trip scripts styles images inline` to perform all four named tasks. To avoid typing all that every time, use **subtasks**.
 
 
 ### subtasks
@@ -154,7 +154,7 @@ This runs the `styles`, `scripts` and `images` tasks in parallel then, when they
 Use a **nested array** to run subtasks in parallel:
 
 ```js
-exports.build = [['styles', 'scripts', 'images'], 'inline'];
+exports.build = [ ['styles', 'scripts', 'images'], 'inline' ];
 ```
 
 Now `$ trip build` does the same thing as the CLI example above, starting `inline` as soon as the three parallel tasks have all completed.
