@@ -51,8 +51,8 @@ describe('trip.js', function () {
   });
 
 
-  it('actions can receive targets from cli and from previous actions', function (done) {
-    exec(cliPath + ' task-targets:"from command line":"hi"', function (err, stdout, stderr) {
+  it('actions can receive arguments from cli', function (done) {
+    exec(cliPath + ' task-arguments:"from command line":"hi"', function (err, stdout, stderr) {
       console.log('\n\n=== STDOUT:\n', stdout, '\n=== /STDOUT');
       console.log('\n\n=== STDERR:', stderr, '\n=== /STDERR');
 
@@ -85,8 +85,8 @@ describe('trip.js', function () {
   });
 
 
-  it('tasks expecting targets still work when not all targets are specified', function (done) {
-    exec(cliPath + ' task-targets:thing', function (err, stdout, stderr) {
+  it('tasks expecting arguments still work when not all arguments are specified', function (done) {
+    exec(cliPath + ' task-arguments:thing', function (err, stdout, stderr) {
       console.log('\n\n=== STDOUT:\n', stdout, '\n=== /STDOUT');
       console.log('\n\n=== STDERR:', stderr, '\n=== /STDERR');
 
@@ -103,14 +103,14 @@ describe('trip.js', function () {
 
 
   it('errors when you overload a task', function (done) {
-    exec(cliPath + ' task-targets:one:two:three:four', function (err, stdout, stderr) {
+    exec(cliPath + ' task-arguments:one:two:three:four', function (err, stdout, stderr) {
       console.log('\n\n=== STDOUT:\n', stdout, '\n=== /STDOUT');
       console.log('\n\n=== STDERR:', stderr, '\n=== /STDERR');
 
       expect(err).to.be.an.instanceOf(Error);
 
       var lines = stdout.split('\n').filter(function (line) {
-        return line.indexOf('Function expects 2 targets, but 4 targets were specified') !== -1;
+        return line.indexOf('Function expects 2 arguments') !== -1;
       });
 
       expect(lines.length).to.equal(1);

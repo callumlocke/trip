@@ -15,10 +15,6 @@ var cli = new Liftoff({
   extensions: interpret.jsVariants
 });
 
-cli.on('require', function (name) {
-  console.log('Requiring external module', chalk.magenta(name));
-});
-
 cli.on('requireFail', function (name) {
   console.log(chalk.red('Failed to load external module'), chalk.magenta(name));
 });
@@ -73,44 +69,44 @@ cli.launch({
   var start = process.hrtime();
 
   async.eachSeries(taskNames, function (taskName, done) {
-    // taskName is something like "foo:hi,bar" or just "foo:hi"
-    // or even just "foo"
+    // taskName is something like "foo:hi,bar:hi" or just "foo:hi" (or "foo")
 
     async.each(taskName.split(','), function (taskName, done) {
       // now taskName is something like "foo:hi" or just "foo" (ie,
-      // definitely a single task)
+      // definitely a single task, maybe with arguments)
 
-      // split out any targets
-      var initialTargets = taskName.split(':');
-      taskName = initialTargets.shift();
+      // split out any arguments
+      var cliArguments = taskName.split(':');
+      taskName = cliArguments.shift();
 
       // run the single task
-      (function runNamedTask(taskName, targets, done) {
+      (function runNamedTask(taskName, args, done) {
         var taskStart = process.hrtime();
 
-        // the targets need to get applied to the task's first action only.
+        // the args need to get applied to the task's first action only.
         trip.log(chalk.cyan(taskName), chalk.gray('started'));
 
         // function to run an array of stuff
-        var runActionArray = function (actions, inSeries, _targets, done) {
+        var runActionArray = function (actions, inSeries, _args, done) {
 
           if (inSeries) {
             async.eachSeries(actions, function (action, done) {
-              // make a unique local targets array to be applied to this action
-              var targets = [].concat(_targets);
+              // make a unique local args array to be applied to this action
+              var args = [].concat(_args);
 
               if (Array.isArray(action)) {
                 // go deeper..
-                runActionArray(action, !inSeries, targets, done);
-                // (nb. we don't try to get output targets from an array)
+                runActionArray(action, !inSeries, args, done);
+                // (nb. we don't try to get output args from an array)
                 return;
               }
 
               var actionDone = function () {
-                // this wraps done, also setting the shared _targets array.
-                var nextTargets = Array.prototype.slice.call(arguments, 0);
-                var err = nextTargets.shift();
-                _targets = nextTargets;
+                // this wraps done, also setting the shared _args array.
+                var nextArgs = Array.prototype.slice.call(arguments, 0);
+                console.log('NEXTARGS', nextArgs);
+                var err = nextArgs.shift();
+                _args = nextArgs;
 
                 done.call(null, err);
               };
@@ -118,35 +114,44 @@ cli.launch({
               var type = typeof action;
 
               if (type === 'string') {
-                runNamedTask(action, targets, actionDone);
+                runNamedTask(action, args, actionDone);
                 return;
               }
 
               if (type === 'function') {
-                // prevent overloading with extra targets as it breaks the
+                // prevent overloading with extra args as it breaks the
                 // automatic callback-at-end functionality
-                var numTargets = targets.length,
-                    numTargetsExpected = action.length - 1;
+                var numArgs = args.length,
+                    numArgsExpected = action.length - 1;
 
-                if (numTargets > numTargetsExpected) {
+                if (numArgsExpected < 0) {
                   done(new Error(
-                    'Function expects ' + numTargetsExpected + ' targets, ' +
-                    'but ' + numTargets + ' targets were specified. ' +
-                    'You cannot overload task functions with extra targets.'
+                    'Function must take a callback as an argument.'
                   ));
                   return;
                 }
 
-                // pad targets with nulls so that callback is guaranteed to be
+                if (numArgs > numArgsExpected) {
+                  done(new Error(
+                    'Function expects ' + numArgsExpected + ' arguments (in ' +
+                    'addition to callback), ' + 'but ' + numArgs +
+                    ' args were passed from the CLI. ' +
+                    'You cannot overload task functions with extra argments.'
+                  ));
+                  return;
+                }
+
+                // pad args with nulls so that callback is guaranteed to be
                 // the last argument the user's function accepts
-                while (targets.length < numTargetsExpected)
-                  targets.push(null);
+                while (args.length < numArgsExpected)
+                  args.push(null);
 
                 // ensure callback is passed to the last one
-                action.apply(trip, targets.concat([actionDone]));
+                action.apply(trip, args.concat([actionDone]));
                 return;
               }
 
+              // error
               done(new TypeError('Unexpected type for task action: ' + type));
 
             }, done);
@@ -157,22 +162,22 @@ cli.launch({
             // combine them into one. maybe.
 
             async.each(actions, function (action, done) {
-              var targets = [].concat(_targets);
+              var args = [].concat(_args);
 
               if (Array.isArray(action)) {
-                runActionArray(action, !inSeries, targets, done);
+                runActionArray(action, !inSeries, args, done);
                 return;
               }
 
               var type = typeof action;
 
               if (type === 'string') {
-                runNamedTask(action, targets, done);
+                runNamedTask(action, args, done);
                 return;
               }
 
               if (type === 'function') {
-                action.apply(trip, targets.concat([done]));
+                action.apply(trip, args.concat([done]));
                 return;
               }
 
@@ -188,7 +193,7 @@ cli.launch({
           throw new Error('Task not registered with name: ' + taskName);
 
         // run the actions array for this named task
-        runActionArray(actions, true, targets, function (err) {
+        runActionArray(actions, true, args, function (err) {
           if (err) {
             trip.log(
               chalk.cyan(taskName),
@@ -206,7 +211,7 @@ cli.launch({
           done.apply(null, arguments);
         }); // todo: add info for logging here?
 
-      })(taskName, initialTargets, done);
+      })(taskName, cliArguments, done);
 
     }, done);
 

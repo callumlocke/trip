@@ -162,13 +162,9 @@ Now `$ trip build` does the same thing as the CLI example above, starting `inlin
 > Each level of nesting reverses the series:parallel decision, so you can do complex, over-engineered stuff if you want. Probably only useful in obscure cases.
 
 
-### task targets
+### task arguments
 
-Targets are arguments for tasks.
-
-#### setting targets from the CLI
-
-You can set targets (only strings) using **colons** as delimiters:
+You can set arguments (only strings) using **colons** as delimiters:
 
 ```sh
 $ trip say:otters:ducks
@@ -184,27 +180,6 @@ exports.say = function (msg1, msg2, msg3, done) {
 ```
 
 Note only two targets were specified, so `msg3` is `null`. This doesn't cause a problem; the `done` callback is always passed as the final argument.
-
-#### setting targets from one task to the next
-
-If you have a series of tasks (either from the command line, or subtasks of another task), it's possible to set targets in one task for the next.
-
-```sh
-$ trip taskOne:otters taskTwo
-```
-
-```js
-exports.taskOne = function (done, msg) {
-  done(null, msg, 'ducks'); // 1st argument must be an error or null
-};
-
-exports.taskTwo = function (msg1, msg2, done) {
-  console.log(msg1); // otters
-  console.log(msg2); // ducks
-  done();
-};
-```
-
 
 
 ## license

@@ -39,12 +39,12 @@ exports['parallel-subtasks'] = [
 ];
 
 
-exports['task-targets'] = [
+exports['task-arguments'] = [
   function (msg1, msg2, done) {
     setTimeout(function () {
       console.log('action 1', msg1, msg2);
       done(null, 'message from action 1');
-    }, 100)
+    }, 100);
   },
 
   function (msg, done) {
