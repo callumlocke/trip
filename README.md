@@ -159,10 +159,10 @@ Note only two arguments were specified, so `msg3` is `null`. This doesn't cause 
 
 <!-- badge URLs -->
 [npm-url]: https://npmjs.org/package/trip
-[npm-image]: https://img.shields.io/npm/v/radixer.svg?style=flat-square
+[npm-image]: https://img.shields.io/npm/v/trip.svg?style=flat-square
 
 [travis-url]: http://travis-ci.org/callumlocke/trip
-[travis-image]: https://img.shields.io/travis/callumlocke/radixer.svg?style=flat-square
+[travis-image]: https://img.shields.io/travis/callumlocke/trip.svg?style=flat-square
 
 [depstat-url]: https://david-dm.org/callumlocke/trip
-[depstat-image]: https://img.shields.io/david/callumlocke/radixer.svg?style=flat-square
+[depstat-image]: https://img.shields.io/david/callumlocke/trip.svg?style=flat-square
