@@ -15,12 +15,9 @@ var cli = new Liftoff({
   extensions: interpret.jsVariants
 });
 
-cli.on('require', function (name) {
-  console.log('Requiring external module', chalk.magenta(name));
-});
-
 cli.on('requireFail', function (name) {
-  console.log(chalk.red('Failed to load external module'), chalk.magenta(name));
+  console.log(chalk.red('Failed to load external module:' + name));
+  console.log('try: npm install ' + name);
 });
 
 cli.launch({
@@ -29,15 +26,15 @@ cli.launch({
   console.log();
 
   if (!env.configPath) {
-    console.error(chalk.red('No tripfile found.'));
+    console.error(chalk.red('no tripfile found'));
     process.exit(1);
   }
 
   if (!env.modulePath) {
-    console.error(chalk.red('No local trip found in ' + env.cwd));
+    console.error(chalk.red('no local trip found in ' + env.cwd));
     console.log(chalk.cyan(
-      '\nYou need to install trip locally:\n  $ '
-    ) + 'npm install --save-dev trip');
+      '\nyou need to install a local copy of trip for this project:\n  $ '
+    ) + 'npm install trip', '\n');
     process.exit(1);
   }
 
@@ -56,8 +53,8 @@ cli.launch({
 
     // ensure they're all arrays
     for (var name in tripfile) {
-      if (tripfile.hasOwnProperty(name)) {
-        if (!Array.isArray(tripfile[name])) tripfile[name] = [tripfile[name]];
+      if (tripfile.hasOwnProperty(name) && !Array.isArray(tripfile[name])) {
+        tripfile[name] = [tripfile[name]];
       }
     }
 
@@ -70,157 +67,63 @@ cli.launch({
   var taskNames = argv._;
   if (taskNames.length === 0) taskNames[0] = 'default';
 
+  process.on('uncaughtException', function (err) {
+    var type;
+    if (err instanceof Error) type = 'error';
+    else type = typeof err;
+
+    trip.log(chalk.red(type + ' thrown:'));
+    console.error(type === 'error' ? err.stack : err, '\n');
+  });
+
+  process.on('exit', function () {
+    if (trip._running > 0) {
+      trip.log(chalk.red('one or more tasks did not call done()'));
+      process.exit(1);
+    }
+  });
+
   var start = process.hrtime();
 
   async.eachSeries(taskNames, function (taskName, done) {
-    // taskName is something like "foo:hi,bar" or just "foo:hi"
-    // or even just "foo"
+    // taskName is something like "foo" or "foo:hi".
 
-    async.each(taskName.split(','), function (taskName, done) {
-      // now taskName is something like "foo:hi" or just "foo" (ie,
-      // definitely a single task)
+    // split out any arguments
+    var cliArguments = taskName.split(':');
+    taskName = cliArguments.shift();
 
-      // split out any targets
-      var initialTargets = taskName.split(':');
-      taskName = initialTargets.shift();
-
-      // run the single task
-      (function runNamedTask(taskName, targets, done) {
-        var taskStart = process.hrtime();
-
-        // the targets need to get applied to the task's first action only.
-        trip.log(chalk.cyan(taskName), chalk.gray('started'));
-
-        // function to run an array of stuff
-        var runActionArray = function (actions, inSeries, _targets, done) {
-
-          if (inSeries) {
-            async.eachSeries(actions, function (action, done) {
-              // make a unique local targets array to be applied to this action
-              var targets = [].concat(_targets);
-
-              if (Array.isArray(action)) {
-                // go deeper..
-                runActionArray(action, !inSeries, targets, done);
-                // (nb. we don't try to get output targets from an array)
-                return;
-              }
-
-              var actionDone = function () {
-                // this wraps done, also setting the shared _targets array.
-                var nextTargets = Array.prototype.slice.call(arguments, 0);
-                var err = nextTargets.shift();
-                _targets = nextTargets;
-
-                done.call(null, err);
-              };
-
-              var type = typeof action;
-
-              if (type === 'string') {
-                runNamedTask(action, targets, actionDone);
-                return;
-              }
-
-              if (type === 'function') {
-                // prevent overloading with extra targets as it breaks the
-                // automatic callback-at-end functionality
-                var numTargets = targets.length,
-                    numTargetsExpected = action.length - 1;
-
-                if (numTargets > numTargetsExpected) {
-                  done(new Error(
-                    'Function expects ' + numTargetsExpected + ' targets, ' +
-                    'but ' + numTargets + ' targets were specified. ' +
-                    'You cannot overload task functions with extra targets.'
-                  ));
-                  return;
-                }
-
-                // pad targets with nulls so that callback is guaranteed to be
-                // the last argument the user's function accepts
-                while (targets.length < numTargetsExpected)
-                  targets.push(null);
-
-                // ensure callback is passed to the last one
-                action.apply(trip, targets.concat([actionDone]));
-                return;
-              }
-
-              done(new TypeError('Unexpected type for task action: ' + type));
-
-            }, done);
-          }
-          else {
-            // this repeats a lot from the async.eachSeries just above, but
-            // the subtle differences make it more hassle than it's worth to
-            // combine them into one. maybe.
-
-            async.each(actions, function (action, done) {
-              var targets = [].concat(_targets);
-
-              if (Array.isArray(action)) {
-                runActionArray(action, !inSeries, targets, done);
-                return;
-              }
-
-              var type = typeof action;
-
-              if (type === 'string') {
-                runNamedTask(action, targets, done);
-                return;
-              }
-
-              if (type === 'function') {
-                action.apply(trip, targets.concat([done]));
-                return;
-              }
-
-              done(new TypeError('Unexpected type for task action: ' + type));
-            }, done);
-          }
-          return;
-        };
-
-        // find this task's actions array
-        var actions = trip.tasks[taskName];
-        if (!actions)
-          throw new Error('Task not registered with name: ' + taskName);
-
-        // run the actions array for this named task
-        runActionArray(actions, true, targets, function (err) {
-          if (err) {
-            trip.log(
-              chalk.cyan(taskName),
-              chalk.red('✘ error'),
-              chalk.gray(prettyHRTime(process.hrtime(taskStart)))
-            );
-          }
-          else {
-            trip.log(
-              chalk.cyan(taskName),
-              chalk.gray('✓', prettyHRTime(process.hrtime(taskStart)))
-            );
-          }
-
-          done.apply(null, arguments);
-        }); // todo: add info for logging here?
-
-      })(taskName, initialTargets, done);
-
-    }, done);
-
+    trip.run(taskName, cliArguments, done);
 
   }, function (err, nextInput) {
     // cli tasks have finished running.
 
     if (err) {
-      trip.log(chalk.red(err.toString()));
+      if (err.message && err.message.indexOf('task not found') === 0) {
+        trip.log(chalk.red(err.message));
 
-      if (!(err instanceof Error)) {
-        trip.log('Warning: an action returned an error, but it was not an ' +
-          'instance of Error. Is the action forgetting to pass null as the ' +
-          'first argument to "done"?');
+        console.log(chalk.gray('\navailable tasks:\n'));
+
+        for (var taskName in trip.tasks) {
+          if (trip.tasks.hasOwnProperty(taskName)) {
+            console.log('  ' + chalk.cyan(taskName));
+          }
+        }
+        console.log('');
+      }
+      else {
+        if (!(err instanceof Error)) {
+          trip.log('warning: this is not an instanceof Error:');
+          console.log('');
+          console.error(err);
+          console.log('');
+        }
+        else {
+          // pretty-print error
+          console.log('');
+          console.error(err.stack); // todo: nicer
+          console.log('');
+          // trip.log(chalk.red(err.toString()));
+        }
       }
     }
 
@@ -236,8 +139,10 @@ cli.launch({
     trip.log(chalk.gray('total: ' + prettyHRTime(process.hrtime(start))));
 
     if (err) {
-      trip.log(chalk.red('trip encountered errors :('));
+      // trip.log(chalk.red(':('));
       process.exit(1);
     }
+
+    // exiting successfully now.
   });
 });

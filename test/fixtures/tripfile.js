@@ -14,6 +14,9 @@ exports['say-thing-1'] = function (done) {
   }, 100);
 };
 
+exports.err = function (done) {
+  done(new Error('shit'));
+};
 
 // expected order: 1,2,3,4
 exports['parallel-subtasks'] = [
@@ -39,12 +42,12 @@ exports['parallel-subtasks'] = [
 ];
 
 
-exports['task-targets'] = [
+exports['task-arguments'] = [
   function (msg1, msg2, done) {
     setTimeout(function () {
       console.log('action 1', msg1, msg2);
-      done(null, 'message from action 1');
-    }, 100)
+      done();
+    }, 100);
   },
 
   function (msg, done) {
@@ -52,3 +55,13 @@ exports['task-targets'] = [
     done();
   }
 ];
+
+
+exports['smoke-test'] = function (done) {
+  var path = require('path');
+  console.assert(
+    this === require(path.resolve(__dirname, '..', '..')),
+    '`this` in a task is trip'
+  );
+  done();
+};
