@@ -7,7 +7,6 @@ var path = require('path');
 var fs = require('fs');
 var expect = require('chai').expect;
 var exec = require('child_process').exec;
-var strip = require('stripcolorcodes');
 
 describe('trip', function () {
 
@@ -38,7 +37,7 @@ describe('trip', function () {
       console.log('\n\n=== STDOUT:\n', stdout, '\n=== /STDOUT');
       console.log('\n\n=== STDERR:', stderr, '\n=== /STDERR');
 
-      var lines = strip(stdout).split('\n').filter(function (line) {
+      var lines = stdout.split('\n').filter(function (line) {
         return line.length && line.charAt(0) !== '[';
       });
 
