@@ -1,19 +1,14 @@
 # trip.js [![NPM version][npm-image]][npm-url] [![Build Status][travis-image]][travis-url] [![Dependency Status][depstat-image]][depstat-url]
 
-**trip** is a minimalist task runner. Sort of like [gulp](http://gulpjs.com/) or [grunt](http://gruntjs.com/) without any build functionality. Or a glorified `$ npm run` with optional parallelism.
+**trip** is a simple task runner.
 
-It doesn't include utilities for reading/writing files or massaging data. The idea is to write your own build system using regular Node modules.
-
-
+It doesn't include utilities for reading/writing files or transforming data. It's not a build system.
 
 ## install
 
 ```sh
 $ npm install --global trip
 ```
-
-This adds trip to your $PATH.
-
 
 ## usage
 
@@ -28,7 +23,7 @@ $ npm install --save-dev trip
 
 #### 2. create a `tripfile.js` at the root of your project
 
-Simply export functions. These are your tasks. Follow the standard Node pattern: take a `done` callback, and call it when you're done. (Pass an error as the first argument to indicate your task failed.)
+Export some functions. These are your tasks. Follow the usual Node pattern: take a `done` callback, and call it when you're done. (And pass it an error if something went wrong.).
 
 ```js
 exports.greet = function (done) {
@@ -41,14 +36,9 @@ exports.greet = function (done) {
 };
 ```
 
-
-
 #### 3. run tasks from the command line
 
 ![Screenshot](screenshots/greet.png)
-
-
-
 
 ### example
 
@@ -61,7 +51,6 @@ var coffee = require('coffee-script'),
     Imagemin = require('imagemin'),
     glob = require('glob');
 
-
 exports.scripts = function (done) {
   fs.readFile('app/scripts/main.coffee', function (err, js) {
     if (err) return done(err);
@@ -70,7 +59,6 @@ exports.scripts = function (done) {
     fs.writeFile('dist/scripts/main.js', js, done);
   });
 };
-
 
 exports.styles = function (done) {
   sass.renderFile({
@@ -83,7 +71,6 @@ exports.styles = function (done) {
     error: done
   });
 };
-
 
 exports.images = function (done) {
   glob('app/**/*.{png,jpg}', function (err, files) {
@@ -98,7 +85,6 @@ exports.images = function (done) {
   });
 };
 
-
 exports.inline = function (done) {
   var embedder = new ResourceEmbedder('app/index.html');
   embedder.get(function (markup) {
@@ -111,7 +97,6 @@ With this tripfile, you can run `$ trip images` to compile all your images, for 
 
 You can also do `$ trip scripts styles images inline` to perform all four named tasks. To avoid typing all that every time, use **subtasks**.
 
-
 ### subtasks
 
 A task can be defined as an **array** of other tasks:
@@ -122,7 +107,7 @@ exports.build = ['scripts', 'styles', 'images', 'inline'];
 
 Now you can do `$ trip build` to run all four tasks, in series.
 
-You can also use **inline functions** (or function references) directly in an array, or a mixture of functions and task names:
+You can also use **inline functions** directly in an array:
 
 ```js
 exports.things = [
@@ -139,18 +124,6 @@ exports.things = [
 
 ### parallel tasks
 
-#### ...from the CLI
-
-Join tasks with **commas** to run them in parallel:
-
-```sh
-$ trip styles,scripts,images inline
-```
-
-This runs the `styles`, `scripts` and `images` tasks in parallel then, when they've all finished, it runs the `inline` task.
-
-#### ...in your tripfile
-
 Use a **nested array** to run subtasks in parallel:
 
 ```js
@@ -160,7 +133,6 @@ exports.build = [ ['styles', 'scripts', 'images'], 'inline' ];
 Now `$ trip build` does the same thing as the CLI example above, starting `inline` as soon as the three parallel tasks have all completed.
 
 > Each level of nesting reverses the series:parallel decision, so you can do complex, over-engineered stuff if you want. Probably only useful in obscure cases.
-
 
 ### task arguments
 
@@ -179,20 +151,18 @@ exports.say = function (msg1, msg2, msg3, done) {
 };
 ```
 
-Note only two targets were specified, so `msg3` is `null`. This doesn't cause a problem; the `done` callback is always passed as the final argument.
-
+Note only two arguments were specified, so `msg3` is `null`. This doesn't cause a problem; the `done` callback is always passed as the final argument that your function accepts.
 
 ## license
 
 [The MIT License](http://opensource.org/licenses/MIT)
 
-
 <!-- badge URLs -->
 [npm-url]: https://npmjs.org/package/trip
-[npm-image]: https://badge.fury.io/js/trip.png
+[npm-image]: https://img.shields.io/npm/v/radixer.svg?style=flat-square
 
 [travis-url]: http://travis-ci.org/callumlocke/trip
-[travis-image]: https://secure.travis-ci.org/callumlocke/trip.png?branch=master
+[travis-image]: https://img.shields.io/travis/callumlocke/radixer.svg?style=flat-square
 
 [depstat-url]: https://david-dm.org/callumlocke/trip
-[depstat-image]: https://david-dm.org/callumlocke/trip.png
+[depstat-image]: https://img.shields.io/david/callumlocke/radixer.svg?style=flat-square
