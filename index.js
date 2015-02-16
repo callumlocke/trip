@@ -31,7 +31,7 @@ var trip = {
 
     var actions = trip.tasks[taskName];
     if (!Array.isArray(actions))
-      return done(new Error('task not found: ' + taskName));
+      return done(new Error('task not found: "' + taskName + '"'));
 
     var resolvedActions;
     try {

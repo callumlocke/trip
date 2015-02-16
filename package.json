@@ -1,42 +1,44 @@
 {
   "name": "trip",
-  "version": "0.5.0",
   "description": "Run JavaScript functions from the command line",
+  "version": "0.5.0",
   "author": "Callum Locke",
-  "license": "MIT",
   "bin": {
     "trip": "cli.js"
   },
-  "scripts": {
-    "test": "jshint **/*.js && mocha"
+  "bugs": {
+    "url": "https://github.com/callumlocke/trip/issues"
   },
   "dependencies": {
-    "async": "~0.9.0",
-    "chalk": "~0.5.1",
-    "interpret": "~0.3.7",
-    "liftoff": "~0.13.6",
-    "minimist": "~1.1.0",
-    "pretty-hrtime": "~0.2.2",
-    "tildify": "~1.0.0"
+    "async": "^0.9.0",
+    "chalk": "^0.5.1",
+    "interpret": "^0.4.3",
+    "liftoff": "^2.0.1",
+    "minimist": "^1.1.0",
+    "pretty-hrtime": "^1.0.0",
+    "tildify": "^1.0.0",
+    "v8flags": "^2.0.2"
   },
   "devDependencies": {
-    "chai": "~1.10.0",
-    "jshint": "~2.5.10",
-    "mocha": "~2.0.1"
+    "chai": "^2.0.0",
+    "jshint": "^2.6.0",
+    "mocha": "^2.1.0"
   },
   "engines": {
     "node": ">= 0.10"
   },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/callumlocke/trip.git"
-  },
+  "homepage": "https://github.com/callumlocke/trip",
   "keywords": [
     "task",
     "build"
   ],
-  "bugs": {
-    "url": "https://github.com/callumlocke/trip/issues"
+  "license": "MIT",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/callumlocke/trip.git"
   },
-  "homepage": "https://github.com/callumlocke/trip"
+  "scripts": {
+    "test": "jshint **/*.js && mocha"
+  }
 }

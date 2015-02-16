@@ -1,29 +1,21 @@
 # trip.js [![NPM version][npm-image]][npm-url] [![Build Status][travis-image]][travis-url] [![Dependency Status][depstat-image]][depstat-url]
 
-**trip** is a simple task runner.
+**trip** is a simple task runner. You write functions in a tripfile and run them from the command line.
 
-It doesn't include utilities for reading/writing files or transforming data. It's not a build system.
+---
 
-## install
+# install
 
 ```sh
 $ npm install --global trip
 ```
 
-## usage
+---
+# use
 
-### getting started
+**1. Create a `tripfile.js` and export some tasks**
 
-#### 1. install a local copy of trip in your project
-
-```sh
-$ cd some/project
-$ npm install --save-dev trip
-```
-
-#### 2. create a `tripfile.js` at the root of your project
-
-Export some functions. These are your tasks. Follow the usual Node pattern: take a `done` callback, and call it when you're done. (And pass it an error if something went wrong.).
+Follow Node's standard async pattern – take a `done` callback, and call it when you're done. (And pass it an error if something went wrong.).
 
 ```js
 exports.greet = function (done) {
@@ -36,22 +28,20 @@ exports.greet = function (done) {
 };
 ```
 
-#### 3. run tasks from the command line
+**2. run tasks from the command line**
 
 ![Screenshot](screenshots/greet.png)
 
-### example
 
-This tripfile exports four tasks:
+## example tripfile
+
+This tripfile exports four tasks (`scripts`, `styles`, `images` and `inline`):
 
 ```js
-var coffee = require('coffee-script'),
-    sass = require('node-sass'),
-    fs = require('fs'),
-    Imagemin = require('imagemin'),
-    glob = require('glob');
-
 exports.scripts = function (done) {
+  var fs = require('fs');
+  var coffee = require('coffee-script');
+
   fs.readFile('app/scripts/main.coffee', function (err, js) {
     if (err) return done(err);
 
@@ -61,6 +51,8 @@ exports.scripts = function (done) {
 };
 
 exports.styles = function (done) {
+  var sass = require('node-sass');
+
   sass.renderFile({
     file: 'app/scripts/main.scss',
     outFile: 'dist/scripts/main.css',
@@ -73,6 +65,9 @@ exports.styles = function (done) {
 };
 
 exports.images = function (done) {
+  var glob = require('glob');
+  var Imagemin = require('imagemin')
+
   glob('app/**/*.{png,jpg}', function (err, files) {
     if (err) return done(err);
 
@@ -86,8 +81,9 @@ exports.images = function (done) {
 };
 
 exports.inline = function (done) {
-  var embedder = new ResourceEmbedder('app/index.html');
-  embedder.get(function (markup) {
+  var ResourceEmbedder = require('resource-embedder');
+
+  new ResourceEmbedder('app/index.html').get(function (markup) {
     fs.writeFile('dist/index.html', markup, done);
   });
 };
@@ -130,7 +126,7 @@ Use a **nested array** to run subtasks in parallel:
 exports.build = [ ['styles', 'scripts', 'images'], 'inline' ];
 ```
 
-Now `$ trip build` does the same thing as the CLI example above, starting `inline` as soon as the three parallel tasks have all completed.
+Now `$ trip build` will run the first three tasks in parallel, then it will run `inline`.
 
 > Each level of nesting reverses the series:parallel decision, so you can do complex, over-engineered stuff if you want. Probably only useful in obscure cases.
 
@@ -151,9 +147,10 @@ exports.say = function (msg1, msg2, msg3, done) {
 };
 ```
 
-Note only two arguments were specified, so `msg3` is `null`. This doesn't cause a problem; the `done` callback is always passed as the final argument that your function accepts.
+Note only two arguments were specified, so `msg3` is `null`. The `done` callback is always passed as the last argument that your function accepts.
 
-## license
+---
+# licence
 
 [The MIT License](http://opensource.org/licenses/MIT)
 

@@ -8,7 +8,7 @@ var tildify = require('tildify');
 var prettyHRTime = require('pretty-hrtime');
 var chalk = require('chalk');
 var argv = require('minimist')(process.argv.slice(2));
-
+var v8flags = require('v8flags');
 
 var cli = new Liftoff({
   name: 'trip',
@@ -21,25 +21,19 @@ cli.on('requireFail', function (name) {
 });
 
 cli.launch({
-  cwd: argv.cwd
+  cwd: argv.cwd,
+  v8flags: v8flags,
+  configPath: argv.file
 }, function (env) {
-  console.log();
+  console.log(); // deliberate
 
   if (!env.configPath) {
     console.error(chalk.red('no tripfile found'));
     process.exit(1);
   }
 
-  if (!env.modulePath) {
-    console.error(chalk.red('no local trip found in ' + env.cwd));
-    console.log(chalk.cyan(
-      '\nyou need to install a local copy of trip for this project:\n  $ '
-    ) + 'npm install trip', '\n');
-    process.exit(1);
-  }
-
   // load the local version of trip
-  var trip = require(env.modulePath);
+  var trip = require(env.modulePath || './index');
 
   // change directory if necessary, and warn about it
   if (env.configBase !== process.cwd()) {
@@ -122,7 +116,6 @@ cli.launch({
           console.log('');
           console.error(err.stack); // todo: nicer
           console.log('');
-          // trip.log(chalk.red(err.toString()));
         }
       }
     }
@@ -139,7 +132,6 @@ cli.launch({
     trip.log(chalk.gray('total: ' + prettyHRTime(process.hrtime(start))));
 
     if (err) {
-      // trip.log(chalk.red(':('));
       process.exit(1);
     }
 
