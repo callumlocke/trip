@@ -47,7 +47,7 @@
     "url": "https://github.com/callumlocke/trip.git"
   },
   "scripts": {
-    "prepublish": "eslint . && multiform",
+    "prepublish": "eslint src && multiform",
     "pretest": "multiform",
     "test": "node test.js",
     "watch": "nodemon --exec 'npm run test' --watch src --watch index.js --watch cli.js --watch test.js --watch package.json --watch multiform.json"
