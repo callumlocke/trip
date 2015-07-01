@@ -42,7 +42,6 @@
     "build"
   ],
   "license": "MIT",
-  "main": "trip.js",
   "repository": {
     "type": "git",
     "url": "https://github.com/callumlocke/trip.git"
