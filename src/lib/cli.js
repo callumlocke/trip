@@ -1,3 +1,5 @@
+/* eslint-disable no-process-exit */
+
 import {red, gray, yellow, cyan} from 'chalk';
 import Liftoff from 'liftoff';
 import {jsVariants} from 'interpret';
@@ -32,7 +34,7 @@ cli.launch({
 
   if (!env.configPath) {
     console.error(red('no tripfile found'));
-    process.exit(1); // eslint-disable-line no-process-exit
+    process.exit(1);
   }
 
   // load the local version of trip if available, otherwise this one
@@ -78,20 +80,20 @@ cli.launch({
 
     trip.log(red(type + ' thrown:'));
     console.error(clearTrace(err), '\n');
-    process.exit(1); // eslint-disable-line no-process-exit
+    process.exit(1);
   });
 
 
   process.on('unhandledRejection', function (err) {
     trip.log(red('unhandled rejection:'));
     console.error(clearTrace(err), '\n');
-    process.exit(1); // eslint-disable-line no-process-exit
+    process.exit(1);
   });
 
   process.on('exit', function () {
     if (trip._running > 0) {
       trip.log(red(`one or more tasks didn't finish`));
-      process.exit(1); // eslint-disable-line no-process-exit
+      process.exit(1);
     }
   });
 
@@ -132,7 +134,7 @@ cli.launch({
 
   trip.log(gray('total: ' + prettyHRTime(process.hrtime(start))));
 
-  if (failed) process.exit(1); // eslint-disable-line no-process-exit
+  if (failed) process.exit(1);
 
   // exiting successfully now.
 });
