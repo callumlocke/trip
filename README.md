@@ -1,6 +1,6 @@
 # trip.js [![NPM version][npm-image]][npm-url] [![Build Status][travis-image]][travis-url] [![Dependency Status][depstat-image]][depstat-url]
 
-**trip** is a simple task runner. You write functions in a tripfile and run them from the command line.
+**trip** is a very simple task runner. You write functions in a tripfile and run them from the command line.
 
 ---
 
@@ -10,146 +10,99 @@
 $ npm install --global trip
 ```
 
+(You might also want to install a local copy with `--save` to lock down the version for your project.)
+
 ---
+
 # use
 
 **1. Create a `tripfile.js` and export some tasks**
 
-Follow Node's standard async pattern – take a `done` callback, and call it when you're done. (And pass it an error if something went wrong.).
-
 ```js
-exports.greet = function (done) {
-  console.log('hi');
-
-  setTimeout(function () {
-    console.log('bye');
-    done();
-  }, 2000);
+exports.greet = function () {
+  console.log('hello world');
 };
 ```
+
+(You can also use `tripfile.babel.js`, `tripfile.coffee`, or [whatever](https://github.com/tkellen/js-interpret#extensions).)
 
 **2. run tasks from the command line**
 
-![Screenshot](screenshots/greet.png)
-
-
-## example tripfile
-
-This tripfile exports four tasks (`scripts`, `styles`, `images` and `inline`):
-
-```js
-exports.scripts = function (done) {
-  var fs = require('fs');
-  var coffee = require('coffee-script');
-
-  fs.readFile('app/scripts/main.coffee', function (err, js) {
-    if (err) return done(err);
-
-    var js = coffee.compile();
-    fs.writeFile('dist/scripts/main.js', js, done);
-  });
-};
-
-exports.styles = function (done) {
-  var sass = require('node-sass');
-
-  sass.renderFile({
-    file: 'app/scripts/main.scss',
-    outFile: 'dist/scripts/main.css',
-    success: function (file) {
-      console.log('rendered', file);
-      done();
-    },
-    error: done
-  });
-};
-
-exports.images = function (done) {
-  var glob = require('glob');
-  var Imagemin = require('imagemin')
-
-  glob('app/**/*.{png,jpg}', function (err, files) {
-    if (err) return done(err);
-
-    async.each(files, function (file, done) {
-      new Imagemin()
-        .src(file)
-        .dest(file.replace('app', 'dist'))
-        .optimize(done);
-    }, done);
-  });
-};
-
-exports.inline = function (done) {
-  var ResourceEmbedder = require('resource-embedder');
-
-  new ResourceEmbedder('app/index.html').get(function (markup) {
-    fs.writeFile('dist/index.html', markup, done);
-  });
-};
+```sh
+$ trip greet
 ```
 
-With this tripfile, you can run `$ trip images` to compile all your images, for example.
 
-You can also do `$ trip scripts styles images inline` to perform all four named tasks. To avoid typing all that every time, use **subtasks**.
+## running multiple tasks
 
-### subtasks
+Just run `$ trip first second third` to run as many functions as you want.
 
-A task can be defined as an **array** of other tasks:
+(If you have a common sequence you run a lot, use subtasks.)
+
+
+## subtasks
+
+A task can be defined as an **array** of subtasks:
 
 ```js
-exports.build = ['scripts', 'styles', 'images', 'inline'];
+exports.build = ['first', 'second', 'third'];
 ```
 
-Now you can do `$ trip build` to run all four tasks, in series.
+Now you can do `$ trip build` to run those three tasks in series.
 
-You can also use **inline functions** directly in an array:
+You can also mix **inline functions** (as literals or references) directly into an array of subtasks:
 
 ```js
 exports.things = [
   'foo',
 
-  function (done) {
+  function () {
     console.log('this runs between foo and bar');
-    done();
   },
 
   'bar'
 ];
 ```
 
-### parallel tasks
 
-Use a **nested array** to run subtasks in parallel:
+## async tasks
+
+If you want to do something asynchronous in any task, return a promise. Trip will wait till it resolves before moving onto the next task in the sequence.
+
+<!-- NOT VERIFIED
+(Tip: if you're using a `tripfile.babel.js` and you opt to enable stage 0 transformations via a `.babelrc` file, then you can even just export async functions as tasks, for the nicest possible async flow control.)
+-->
+
+## parallel tasks
+
+Use a **nested array** if you want to run certain subtasks in parallel:
 
 ```js
-exports.build = [ ['styles', 'scripts', 'images'], 'inline' ];
+exports.build = [ ['one', 'two'], 'three' ];
 ```
 
-Now `$ trip build` will run the first three tasks in parallel, then it will run `inline`.
+Now `$ trip build` will run tasks `one` and `two` in parallel, then it will finally run `three`.
 
 > Each level of nesting reverses the series:parallel decision, so you can do complex, over-engineered stuff if you want. Probably only useful in obscure cases.
 
-### task arguments
+<!-- NOT YET IMPLEMENTED...
+### task flags
 
-You can set arguments (only strings) using **colons** as delimiters:
+You can set boolean flags using **colons** as delimiters:
 
 ```sh
 $ trip say:otters:ducks
 ```
 
 ```js
-exports.say = function (msg1, msg2, msg3, done) {
-  console.log(msg1); // otters
-  console.log(msg2); // ducks
-  console.log(msg3); // null
-  done();
+exports.say = function (options) {
+  console.log(options); // {otters: true, ducks: true}
 };
 ```
-
-Note only two arguments were specified, so `msg3` is `null`. The `done` callback is always passed as the last argument that your function accepts.
+-->
 
 ---
+
 # licence
 
 [The MIT License](http://opensource.org/licenses/MIT)
