@@ -33,11 +33,18 @@ $ trip greet
 ```
 
 
+## async tasks
+
+If you want to do something asynchronous in any task, just return a promise. Trip will wait till it resolves before the it deems the task complete.
+
+<!-- NOT VERIFIED
+(Tip: if you're using a `tripfile.babel.js` and you opt to enable stage 0 transformations via a `.babelrc` file, then you can even just export async functions as tasks, for the nicest possible async flow control.)
+-->
+
+
 ## running multiple tasks
 
-Just run `$ trip first second third` to run as many functions as you want.
-
-(If you have a common sequence you run a lot, use subtasks.)
+Just run `$ trip first second third` to run as many tasks as you want **in series**.
 
 
 ## subtasks
@@ -48,7 +55,7 @@ A task can be defined as an **array** of subtasks:
 exports.build = ['first', 'second', 'third'];
 ```
 
-Now you can do `$ trip build` to run those three tasks in series.
+Now you can do `$ trip build` to run those three tasks (in series).
 
 You can also mix **inline functions** (as literals or references) directly into an array of subtasks:
 
@@ -65,15 +72,7 @@ exports.things = [
 ```
 
 
-## async tasks
-
-If you want to do something asynchronous in any task, return a promise. Trip will wait till it resolves before moving onto the next task in the sequence.
-
-<!-- NOT VERIFIED
-(Tip: if you're using a `tripfile.babel.js` and you opt to enable stage 0 transformations via a `.babelrc` file, then you can even just export async functions as tasks, for the nicest possible async flow control.)
--->
-
-## parallel tasks
+## parallel subtasks
 
 Use a **nested array** if you want to run certain subtasks in parallel:
 
@@ -84,6 +83,7 @@ exports.build = [ ['one', 'two'], 'three' ];
 Now `$ trip build` will run tasks `one` and `two` in parallel, then it will finally run `three`.
 
 > Each level of nesting reverses the series:parallel decision, so you can do complex, over-engineered stuff if you want. Probably only useful in obscure cases.
+
 
 <!-- NOT YET IMPLEMENTED...
 ### task flags
