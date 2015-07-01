@@ -78,12 +78,14 @@ cli.launch({
 
     trip.log(red(type + ' thrown:'));
     console.error(clearTrace(err), '\n');
+    process.exit(1); // eslint-disable-line no-process-exit
   });
 
 
   process.on('unhandledRejection', function (err) {
     trip.log(red('unhandled rejection:'));
     console.error(clearTrace(err), '\n');
+    process.exit(1); // eslint-disable-line no-process-exit
   });
 
   process.on('exit', function () {
