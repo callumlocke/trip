@@ -10,6 +10,7 @@
     "url": "https://github.com/callumlocke/trip/issues"
   },
   "dependencies": {
+    "babel-runtime": "^5.6.15",
     "bluebird": "^2.9.30",
     "chalk": "^1.0.0",
     "clear-trace": "0.0.5",
