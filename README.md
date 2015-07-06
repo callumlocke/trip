@@ -85,7 +85,6 @@ Now `$ trip build` will run tasks `one` and `two` in parallel, then it will fina
 > Each level of nesting reverses the series:parallel decision, so you can do complex, over-engineered stuff if you want. Probably only useful in obscure cases.
 
 
-<!-- NOT YET IMPLEMENTED...
 ### task flags
 
 You can set boolean flags using **colons** as delimiters:
@@ -99,7 +98,13 @@ exports.say = function (options) {
   console.log(options); // {otters: true, ducks: true}
 };
 ```
--->
+
+You can also set flags on subtasks:
+
+```
+exports.default = [['html:prod', 'styles'], 'test', 'deploy:prod'];
+```
+
 
 ---
 

@@ -41,19 +41,23 @@ exports['parallel-subtasks'] = [
 ];
 
 
-// exports['task-arguments'] = [
-//   function (msg1, msg2) {
-//     setTimeout(function () {
-//       console.log('action 1', msg1, msg2);
-//       done();
-//     }, 100);
-//   },
+exports['list-flags'] = function (flags) {
+  console.log('flags are:', Object.keys(flags).join(', '));
+};
 
-//   function (msg, done) {
-//     console.log('action 2', msg);
-//     done();
-//   }
-// ];
+
+
+exports['flags-for-subtasks'] = [
+  'say-thing-1',
+  'list-flags:x:y:z',
+  'say-thing-2',
+];
+
+exports['no-subtask-flags-from-cli'] = [
+  'list-flags',
+  'say-thing-1',
+  'say-thing-2',
+];
 
 
 exports['smoke-test'] = function () {

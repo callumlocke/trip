@@ -51,7 +51,57 @@ const exec = Promise.promisify(cp.exec);
   }
 
 
-  // it('first action can receive arguments from cli', function (done) {
+  {
+    console.log('tasks can have flags from CLI');
+
+    const [stdout, stderr] = await exec(cliPath + ' list-flags:foo:bar');
+    console.log('\n\n=== STDOUT:\n', stdout, '\n=== /STDOUT');
+    console.log('\n\n=== STDERR:', stderr, '\n=== /STDERR');
+
+    const lines = stdout.split('\n')
+      .filter(line => line.length && line.charAt(0) !== '[');
+
+    console.log('LINES', lines);
+
+    expect(lines[0]).to.equal('flags are: foo, bar');
+    expect(stderr).to.equal('');
+  }
+
+
+  {
+    console.log('flags can be set for subtasks');
+
+    const [stdout, stderr] = await exec(cliPath + ' flags-for-subtasks');
+    console.log('\n\n=== STDOUT:\n', stdout, '\n=== /STDOUT');
+    console.log('\n\n=== STDERR:', stderr, '\n=== /STDERR');
+
+    const lines = stdout.split('\n')
+      .filter(line => line.length && line.charAt(0) !== '[');
+
+    console.log('LINES', lines);
+
+
+    expect(lines[1]).to.equal('flags are: x, y, z');
+    expect(stderr).to.equal('');
+  }
+
+  {
+    console.log('subtasks do not receive flags from CLI');
+
+    const [stdout, stderr] = await exec(cliPath + ' no-subtask-flags-from-cli:not:these');
+    console.log('\n\n=== STDOUT:\n', stdout, '\n=== /STDOUT');
+    console.log('\n\n=== STDERR:', stderr, '\n=== /STDERR');
+
+    const lines = stdout.split('\n')
+      .filter(line => line.length && line.charAt(0) !== '[');
+
+    console.log('LINES', lines);
+
+    expect(lines[0]).to.equal('flags are: ');
+    expect(stderr).to.equal('');
+  }
+
+  // it('tasks can have flags', function (done) {
   //   exec(cliPath + ' task-arguments:"from command line":"hi"', function (err, stdout, stderr) {
   //     console.log('\n\n=== STDOUT:\n', stdout, '\n=== /STDOUT');
   //     console.log('\n\n=== STDERR:', stderr, '\n=== /STDERR');

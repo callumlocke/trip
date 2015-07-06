@@ -13,7 +13,14 @@ const trip = {
 export default trip;
 
 
-export async function run(taskName) {
+export async function run(task) {
+  if (!isString(task)) throw new TypeError('Expected string');
+
+  const [taskName, ...flagNames] = task.split(':');
+
+  const flags = {};
+  for (const name of flagNames) flags[name] = true;
+
   const actions = trip.tasks[taskName];
 
   if (!Array.isArray(actions)) {
@@ -44,7 +51,7 @@ export async function run(taskName) {
       else {
         // it's a singular task - either a string or a function.
         if (isString(action)) await run(action);
-        else if (isFunction(action)) await Promise.resolve(action.call(trip));
+        else if (isFunction(action)) await Promise.resolve(action.call(trip, flags));
         else throw new TypeError(`unexpected type for action ${i} of task: ${typeof action}`);
       }
     }
@@ -53,8 +60,7 @@ export async function run(taskName) {
   }
   catch (error) {
     log(
-      cyan(taskName),
-      red('✘ error'),
+      cyan(taskName), red('✘ error'),
       gray(prettyHRTime(process.hrtime(taskStart)))
     );
 
@@ -63,8 +69,7 @@ export async function run(taskName) {
 
 
   log(
-    cyan(taskName),
-    green('✓'),
+    cyan(taskName), green('✓'),
     gray(prettyHRTime(process.hrtime(taskStart)))
   );
 }
