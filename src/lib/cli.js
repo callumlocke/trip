@@ -9,6 +9,8 @@ import minimist from 'minimist';
 import v8flags from 'v8flags';
 import semver from 'semver';
 import clearTrace from 'clear-trace';
+import {join} from 'path';
+import {existsSync} from 'fs';
 
 const argv = minimist(process.argv.slice(2));
 
@@ -21,8 +23,21 @@ const cli = new Liftoff({
 });
 
 cli.on('requireFail', function (name) {
-  console.log(red('Failed to load external module:' + name));
-  console.log('try: npm install ' + name);
+  console.error(red('\nFailed to load external module: ' + name));
+
+  console.error(`\nBecause of your tripfile's extension, trip tried to import ` + cyan(name) + ', but it was not found.');
+
+  const hasPackageJSON = existsSync(join(argv.cwd || process.cwd(), 'package.json'));
+
+  console.error(
+    '\nYou could try: \n\n  ' + gray('$ ') + cyan(
+      'npm install ' +
+      (hasPackageJSON ? '--save-dev ' : '') +
+      name.split('/')[0]
+    ) + '\n'
+  );
+
+  process.exit(1);
 });
 
 cli.launch({
