@@ -13,6 +13,7 @@ import {join} from 'path';
 import {existsSync} from 'fs';
 
 const argv = minimist(process.argv.slice(2));
+const quiet = (argv.quiet || argv.q);
 
 const cliPackage = require('../../package.json');
 
@@ -22,22 +23,29 @@ const cli = new Liftoff({
   extensions: jsVariants,
 });
 
-cli.on('requireFail', function (name) {
-  console.error(red('\nFailed to load external module: ' + name));
+cli.on('requireFail', (name, error) => {
+  if (error.message.substring(0, 19) === 'Cannot find module ') {
+    console.error(red('\nFailed to load external module: ' + name));
 
-  console.error(`\nBecause of your tripfile's extension, trip tried to import ` + cyan(name) + ', but it was not found.');
+    console.error(
+      `\nBecause of your tripfile's extension, trip tried to import the external\nmodule ` +
+      cyan(name) + ', but it was not found.'
+    );
 
-  const hasPackageJSON = existsSync(join(argv.cwd || process.cwd(), 'package.json'));
+    const hasPackageJSON = existsSync(join(argv.cwd || process.cwd(), 'package.json'));
 
-  console.error(
-    '\nYou could try: \n\n  ' + gray('$ ') + cyan(
-      'npm install ' +
-      (hasPackageJSON ? '--save-dev ' : '') +
-      name.split('/')[0]
-    ) + '\n'
-  );
+    console.error(
+      '\nYou could try: \n\n  ' + gray('$ ') + cyan(
+        'npm install ' +
+        (hasPackageJSON ? '--save-dev ' : '') +
+        name.split('/')[0]
+      ) + '\n'
+    );
 
-  process.exit(1);
+    process.exit(1);
+  }
+
+  else throw error;
 });
 
 cli.launch({
@@ -45,7 +53,7 @@ cli.launch({
   v8flags: v8flags,
   configPath: argv.file,
 }, async function (env) {
-  console.log(); // intentional
+  if (!quiet) console.log('');
 
   if (!env.configPath) {
     console.error(red('no tripfile found'));
@@ -54,6 +62,9 @@ cli.launch({
 
   // load the local version of trip if available, otherwise this one
   const trip = require(env.modulePath || './index').default;
+
+  // disable trip.log if necessary
+  if (quiet) trip._quiet = true;
 
   // Check for semver difference between cli and local installation
   if (semver.gt(cliPackage.version, env.modulePackage.version)) {
@@ -132,14 +143,14 @@ cli.launch({
     failed = true;
 
     if (err.message && err.message.indexOf('task not found') === 0) {
-      trip.log(red(err.message));
+      console.error(red(err.message));
 
-      console.log(gray('\navailable tasks:\n'));
+      console.error(gray('\navailable tasks:\n'));
 
       for (const taskName of Object.keys(trip.tasks)) {
-        console.log('  ' + cyan(taskName));
+        console.error('  ' + cyan(taskName));
       }
-      console.log('');
+      console.error('');
     }
     else {
       console.error('  ' + clearTrace(err).split('\n').join('\n  '));

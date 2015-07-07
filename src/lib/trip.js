@@ -4,6 +4,7 @@ import {isString, isFunction} from 'lodash';
 import Promise from 'bluebird';
 
 const trip = {
+  _quiet: false,
   _running: 0,
   run,
   log,
@@ -76,6 +77,8 @@ export async function run(task) {
 
 
 export function log(...args) {
+  if (trip._quiet) return;
+
   const date = new Date();
   let hh = date.getHours() + '';
   let mm = date.getMinutes() + '';
