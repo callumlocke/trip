@@ -87,7 +87,7 @@ Now `$ trip build` will run tasks `one` and `two` in parallel, then it will fina
 
 ### task flags
 
-You can set boolean flags using **colons** as delimiters:
+You can pass boolean flags into tasks using **colons** as delimiters:
 
 ```sh
 $ trip say:otters:ducks
