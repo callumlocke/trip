@@ -1,7 +1,7 @@
 {
   "name": "trip",
   "description": "Run JavaScript functions from the command line",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "author": "Callum Locke",
   "bin": {
     "trip": "cli.js"
